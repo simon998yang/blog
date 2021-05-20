@@ -3,10 +3,13 @@ default: &default
   encoding: utf8
   pool: 25
   host: localhost
-  username: postgres
-  password: ''
+  database: little_grass_2919
+  username: rxkhwcw4uu4a8mkf
+  password: cJ85yGYELdvb3hJfhjkHJSBJ-UTyDF-d
 development:
   <<: *default
+  username: simonyang
+  password: ''
   database: blog_development
 test:
   <<: *default
