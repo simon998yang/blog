@@ -40,3 +40,8 @@ yarn-debug.log*
 .yarn-integrity
 tmp
 log
+.idea/inspectionProfiles/Project_Default.xml
+.idea/blog.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea
