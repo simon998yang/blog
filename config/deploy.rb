@@ -2,7 +2,9 @@
 lock "~> 3.16.0"
 
 set :application, "blog"
-set :repo_url, "git@github.com:simonyangyang/blog.git"
+# set :repo_url, "git@github.com:simonyangyang/blog.git"
+set :repo_url, "https://github.com/simonyangyang/blog.git"
+
 set :user, "ubuntu"
 
 # Default branch is :master
@@ -21,6 +23,12 @@ set :puma_preload_app, true
 set :puma_worker_timeout, nil
 set :puma_init_active_record, true  # Change to true if using ActiveRecord
 
+set :nvm_type, :user
+set :nvm_node, 'v13.8.0'
+set :nvm_map_bins, %w{node npm yarn}
+
+set :rbenv_custom_path, "/home/ubuntu/.rbenv"
+
 # Default value for :format is :airbrussh.
 # set :format, :airbrussh
 
@@ -33,9 +41,11 @@ set :puma_init_active_record, true  # Change to true if using ActiveRecord
 
 # Default value for :linked_files is []
 # append :linked_files, "config/database.yml"
+#set :linked_files, %w{config/master.key}
+
 
 # Default value for linked_dirs is []
-# append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system"
+append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system"
 
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
