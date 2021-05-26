@@ -3,12 +3,23 @@ lock "~> 3.16.0"
 
 set :application, "blog"
 set :repo_url, "git@github.com:simonyangyang/blog.git"
+set :user, "ubuntu"
 
 # Default branch is :master
 # ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
 # Default deploy_to directory is /var/www/my_app_name
 # set :deploy_to, "/var/www/my_app_name"
+set :deploy_to, "/home/#{fetch(:user)}/apps/#{fetch(:application)}"
+
+set :puma_bind,       "unix://#{shared_path}/tmp/sockets/#{fetch(:application)}-puma.sock"
+set :puma_state,      "#{shared_path}/tmp/pids/puma.state"
+set :puma_pid,        "#{shared_path}/tmp/pids/puma.pid"
+set :puma_access_log, "#{release_path}/log/puma.error.log"
+set :puma_error_log,  "#{release_path}/log/puma.access.log"
+set :puma_preload_app, true
+set :puma_worker_timeout, nil
+set :puma_init_active_record, true  # Change to true if using ActiveRecord
 
 # Default value for :format is :airbrussh.
 # set :format, :airbrussh
