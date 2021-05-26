@@ -1,109 +1,55 @@
 # config valid for current version and patch releases of Capistrano
 lock "~> 3.16.0"
 
-set :application, "blog"
-# set :repo_url, "git@github.com:simonyangyang/blog.git"
-set :repo_url, "https://github.com/simonyangyang/blog.git"
+set :application, 'blog'
+set :deploy_user, 'ubuntu'
 
-set :user, "ubuntu"
+# setup repo details
+set :repo_url, 'https://github.com/simonyangyang/blog.git'
 
-# Default branch is :master
-# ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
+# without this systemd unit file is wrong
+set :rbenv_path, "/home/ubuntu/.rbenv"
+# setup rbenv.
 
-# Default deploy_to directory is /var/www/my_app_name
-# set :deploy_to, "/var/www/my_app_name"
-set :deploy_to, "/home/#{fetch(:user)}/apps/#{fetch(:application)}"
+set :rbenv_type, :user
+set :rbenv_ruby, '3.0.0'
+set :rbenv_prefix, "RBENV_ROOT=#{fetch(:rbenv_path)} RBENV_VERSION=#{fetch(:rbenv_ruby)} #{fetch(:rbenv_path)}/bin/rbenv exec"
+set :rbenv_map_bins, %w{rake gem bundle ruby rails}
 
-set :puma_bind,       "unix://#{shared_path}/tmp/sockets/#{fetch(:application)}-puma.sock"
-set :puma_state,      "#{shared_path}/tmp/pids/puma.state"
-set :puma_pid,        "#{shared_path}/tmp/pids/puma.pid"
-set :puma_access_log, "#{release_path}/log/puma.error.log"
-set :puma_error_log,  "#{release_path}/log/puma.access.log"
-set :puma_preload_app, true
-set :puma_worker_timeout, nil
-set :puma_init_active_record, true  # Change to true if using ActiveRecord
+puts "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #{fetch(:rbenv_path)}"
+puts "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #{fetch(:rbenv_prefix)}"
 
-set :nvm_type, :user
-set :nvm_node, 'v13.8.0'
-set :nvm_map_bins, %w{node npm yarn}
+# setup certbot for SSL via letsencrypt
+set :certbot_enable_ssl, false
+set :certbot_redirect_to_https, true
+set :certbot_email, ""
+set :certbot_use_acme_staging, false
 
-set :rbenv_custom_path, "/home/ubuntu/.rbenv"
+# setup puma to operate in clustered mode, required for zero downtime deploys
+set :puma_preload_app, false
+set :puma_init_active_record, true
+set :puma_workers, 3
+set :puma_systemctl_user, fetch(:deploy_user)
+set :puma_enable_lingering, true
 
-# Default value for :format is :airbrussh.
-# set :format, :airbrussh
+# set :puma_bind, "unix://#{shared_path}/tmp/sockets/#{fetch(:application)}-puma.sock"
+set :puma_bind, -> { "unix://#{shared_path}/tmp/sockets/puma.sock" }
+set :puma_state, -> { "#{shared_path}/tmp/pids/puma.state" }
+set :puma_pid, -> { "#{shared_path}/tmp/pids/puma.pid" }
 
-# You can configure the Airbrussh format using :format_options.
-# These are the defaults.
-# set :format_options, command_output: true, log_file: "log/capistrano.log", color: :auto, truncate: :auto
+set :bundle_flags, '--deployment'
 
-# Default value for :pty is false
-# set :pty, true
+# how many old releases do we want to keep
+set :keep_releases, 5
 
-# Default value for :linked_files is []
-# append :linked_files, "config/database.yml"
-#set :linked_files, %w{config/master.key}
+# Directories that should be linked to the shared folder
+append :linked_dirs, 'log', 'tmp/pids', 'tmp/cache', 'tmp/sockets', 'vendor/bundle', '.bundle', 'public/system', 'public/uploads'
+append :linked_files, 'config/database.yml', 'config/master.key'
 
-
-# Default value for linked_dirs is []
-append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system"
-
-# Default value for default_env is {}
-# set :default_env, { path: "/opt/ruby/bin:$PATH" }
-
-# Default value for local_user is ENV['USER']
-# set :local_user, -> { `git config user.name`.chomp }
-
-# Default value for keep_releases is 5
-# set :keep_releases, 5
-
-# Uncomment the following to require manually verifying the host key before first deploy.
-# set :ssh_options, verify_host_key: :secure
-
-namespace :puma do
-  desc 'Create Directories for Puma Pids and Socket'
-  task :make_dirs do
-    on roles(:app) do
-      execute "mkdir #{shared_path}/tmp/sockets -p"
-      execute "mkdir #{shared_path}/tmp/pids -p"
-    end
-  end
-
-  before :start, :make_dirs
-end
+# this:
+# http://www.capistranorb.com/documentation/getting-started/flow/
+# is worth reading for a quick overview of what tasks are called
+# and when for `cap stage deploy`
 
 namespace :deploy do
-  desc "Make sure local git is in sync with remote."
-  task :check_revision do
-    on roles(:app) do
-      unless `git rev-parse HEAD` == `git rev-parse origin/master`
-        puts "WARNING: HEAD is not the same as origin/master"
-        puts "Run `git push` to sync changes."
-        exit
-      end
-    end
-  end
-
-  desc 'Initial Deploy'
-  task :initial do
-    on roles(:app) do
-      before 'deploy:restart', 'puma:start'
-      invoke 'deploy'
-    end
-  end
-
-  desc 'Restart application'
-  task :restart do
-    on roles(:app), in: :sequence, wait: 5 do
-      invoke 'puma:restart'
-    end
-  end
-
-  before :starting,     :check_revision
-  after  :finishing,    :compile_assets
-  after  :finishing,    :cleanup
-  after  :finishing,    :restart
 end
-
-# ps aux | grep puma    # Get puma pid
-# kill -s SIGUSR2 pid   # Restart puma
-# kill -s SIGTERM pid   # Stop puma
